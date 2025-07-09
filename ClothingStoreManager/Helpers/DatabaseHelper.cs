@@ -153,5 +153,61 @@ CREATE TABLE IF NOT EXISTS Users (
             }
             return list;
         }
+        // إضافة عميل
+        public static void AddCustomer(Models.Customer customer)
+        {
+            using var conn = GetConnection();
+            conn.Open();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "INSERT INTO Customers (Name, Phone, Address) VALUES (@n, @p, @a)";
+            cmd.Parameters.AddWithValue("@n", customer.Name);
+            cmd.Parameters.AddWithValue("@p", customer.Phone);
+            cmd.Parameters.AddWithValue("@a", customer.Address);
+            cmd.ExecuteNonQuery();
+        }
+        // تحديث عميل
+        public static void UpdateCustomer(Models.Customer customer)
+        {
+            using var conn = GetConnection();
+            conn.Open();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "UPDATE Customers SET Name=@n, Phone=@p, Address=@a WHERE Id=@id";
+            cmd.Parameters.AddWithValue("@n", customer.Name);
+            cmd.Parameters.AddWithValue("@p", customer.Phone);
+            cmd.Parameters.AddWithValue("@a", customer.Address);
+            cmd.Parameters.AddWithValue("@id", customer.Id);
+            cmd.ExecuteNonQuery();
+        }
+        // حذف عميل
+        public static void DeleteCustomer(int id)
+        {
+            using var conn = GetConnection();
+            conn.Open();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "DELETE FROM Customers WHERE Id=@id";
+            cmd.Parameters.AddWithValue("@id", id);
+            cmd.ExecuteNonQuery();
+        }
+        // جلب جميع العملاء
+        public static List<Models.Customer> GetAllCustomers()
+        {
+            var list = new List<Models.Customer>();
+            using var conn = GetConnection();
+            conn.Open();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT * FROM Customers";
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                list.Add(new Models.Customer
+                {
+                    Id = reader.GetInt32(0),
+                    Name = reader.GetString(1),
+                    Phone = reader.GetString(2),
+                    Address = reader.GetString(3)
+                });
+            }
+            return list;
+        }
     }
 }

@@ -1,5 +1,9 @@
 using System.Windows.Forms;
 using System.Drawing;
+using ClothingStoreManager.Helpers;
+using ClothingStoreManager.Models;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace ClothingStoreManager.Forms
 {
@@ -9,6 +13,7 @@ namespace ClothingStoreManager.Forms
         private Button btnAdd, btnEdit, btnDelete, btnSearch;
         private TextBox txtSearch;
         private Label lblTitle;
+        private List<Customer> customers = new List<Customer>();
 
         public CustomersForm()
         {
@@ -57,6 +62,55 @@ namespace ClothingStoreManager.Forms
             this.Controls.Add(dgvCustomers);
             this.Controls.Add(panel);
             this.Controls.Add(lblTitle);
+        }
+
+        private void LoadCustomers(string? search = null)
+        {
+            customers = DatabaseHelper.GetAllCustomers();
+            if (!string.IsNullOrWhiteSpace(search))
+                dgvCustomers.DataSource = customers.Where(c => c.Name.Contains(search) || c.Phone.Contains(search)).ToList();
+            else
+                dgvCustomers.DataSource = customers;
+        }
+
+        private void CustomersForm_Load(object sender, EventArgs e)
+        {
+            btnAdd.Click += (s, e) =>
+            {
+                var form = new CustomerEditForm();
+                if (form.ShowDialog() == DialogResult.OK)
+                {
+                    DatabaseHelper.AddCustomer(form.Customer);
+                    LoadCustomers();
+                }
+            };
+            btnEdit.Click += (s, e) =>
+            {
+                if (dgvCustomers.CurrentRow != null)
+                {
+                    var customer = (Customer)dgvCustomers.CurrentRow.DataBoundItem;
+                    var form = new CustomerEditForm(customer);
+                    if (form.ShowDialog() == DialogResult.OK)
+                    {
+                        DatabaseHelper.UpdateCustomer(form.Customer);
+                        LoadCustomers();
+                    }
+                }
+            };
+            btnDelete.Click += (s, e) =>
+            {
+                if (dgvCustomers.CurrentRow != null)
+                {
+                    var customer = (Customer)dgvCustomers.CurrentRow.DataBoundItem;
+                    if (MessageBox.Show($"هل تريد حذف العميل {customer.Name}?", "تأكيد", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                    {
+                        DatabaseHelper.DeleteCustomer(customer.Id);
+                        LoadCustomers();
+                    }
+                }
+            };
+            btnSearch.Click += (s, e) => LoadCustomers(txtSearch.Text);
+            LoadCustomers();
         }
     }
 }
