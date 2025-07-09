@@ -1,5 +1,9 @@
 using System.Windows.Forms;
 using System.Drawing;
+using ClothingStoreManager.Helpers;
+using ClothingStoreManager.Models;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace ClothingStoreManager.Forms
 {
@@ -9,6 +13,7 @@ namespace ClothingStoreManager.Forms
         private Button btnAdd, btnEdit, btnDelete, btnSearch;
         private TextBox txtSearch;
         private Label lblTitle;
+        private List<Item> items = new List<Item>();
 
         public ItemsForm()
         {
@@ -57,6 +62,55 @@ namespace ClothingStoreManager.Forms
             this.Controls.Add(dgvItems);
             this.Controls.Add(panel);
             this.Controls.Add(lblTitle);
+        }
+
+        private void LoadItems(string? search = null)
+        {
+            items = DatabaseHelper.GetAllItems();
+            if (!string.IsNullOrWhiteSpace(search))
+                dgvItems.DataSource = items.Where(i => i.Name.Contains(search) || i.Type.Contains(search) || i.Brand.Contains(search)).ToList();
+            else
+                dgvItems.DataSource = items;
+        }
+
+        private void ItemsForm_Load(object sender, EventArgs e)
+        {
+            btnAdd.Click += (s, e) =>
+            {
+                var form = new ItemEditForm();
+                if (form.ShowDialog() == DialogResult.OK)
+                {
+                    DatabaseHelper.AddItem(form.Item);
+                    LoadItems();
+                }
+            };
+            btnEdit.Click += (s, e) =>
+            {
+                if (dgvItems.CurrentRow != null)
+                {
+                    var item = (Item)dgvItems.CurrentRow.DataBoundItem;
+                    var form = new ItemEditForm(item);
+                    if (form.ShowDialog() == DialogResult.OK)
+                    {
+                        DatabaseHelper.UpdateItem(form.Item);
+                        LoadItems();
+                    }
+                }
+            };
+            btnDelete.Click += (s, e) =>
+            {
+                if (dgvItems.CurrentRow != null)
+                {
+                    var item = (Item)dgvItems.CurrentRow.DataBoundItem;
+                    if (MessageBox.Show($"هل تريد حذف الصنف {item.Name}?", "تأكيد", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                    {
+                        DatabaseHelper.DeleteItem(item.Id);
+                        LoadItems();
+                    }
+                }
+            };
+            btnSearch.Click += (s, e) => LoadItems(txtSearch.Text);
+            LoadItems();
         }
     }
 }
