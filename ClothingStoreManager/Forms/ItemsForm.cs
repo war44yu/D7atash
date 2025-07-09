@@ -62,6 +62,7 @@ namespace ClothingStoreManager.Forms
             this.Controls.Add(dgvItems);
             this.Controls.Add(panel);
             this.Controls.Add(lblTitle);
+            this.Load += ItemsForm_Load;
         }
 
         private void LoadItems(string? search = null)

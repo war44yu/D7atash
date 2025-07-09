@@ -46,7 +46,7 @@ namespace ClothingStoreManager
             btnStock.Click += (s, e) => MessageBox.Show("نافذة المخزون قيد التطوير", "تنبيه");
             btnSales.Click += (s, e) => new Forms.SalesForm().ShowDialog();
             btnCustomers.Click += (s, e) => new Forms.CustomersForm().ShowDialog();
-            btnSuppliers.Click += (s, e) => MessageBox.Show("نافذة الموردين قيد التطوير", "تنبيه");
+            btnSuppliers.Click += (s, e) => new Forms.SuppliersForm().ShowDialog();
             btnReports.Click += (s, e) => new Forms.ReportsForm().ShowDialog();
             btnSettings.Click += (s, e) =>
             {
@@ -64,15 +64,17 @@ namespace ClothingStoreManager
             btnSuppliers.Top = btnCustomers.Bottom + 10;
             btnReports.Top = btnSuppliers.Bottom + 10;
             btnSettings.Top = btnReports.Bottom + 10;
-            if (userRole == "مدير")
-            {
-                sidePanel.Controls.Add(btnUsers);
-                btnUsers.Click += (s, e) => new Forms.UsersForm().ShowDialog();
-            }
 
             sidePanel.Controls.AddRange(new Control[] {
                 btnDashboard, btnItems, btnStock, btnSales, btnCustomers, btnSuppliers, btnReports, btnSettings
             });
+
+            if (userRole == "مدير")
+            {
+                btnUsers.Top = btnSettings.Bottom + 10;
+                sidePanel.Controls.Add(btnUsers);
+                btnUsers.Click += (s, e) => new Forms.UsersForm().ShowDialog();
+            }
 
             lblTitle = new Label()
             {

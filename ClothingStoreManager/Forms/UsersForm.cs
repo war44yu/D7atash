@@ -1,5 +1,9 @@
 using System.Windows.Forms;
 using System.Drawing;
+using ClothingStoreManager.Helpers;
+using ClothingStoreManager.Models;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace ClothingStoreManager.Forms
 {
@@ -8,6 +12,7 @@ namespace ClothingStoreManager.Forms
         private DataGridView dgvUsers;
         private Button btnAdd, btnEdit, btnDelete, btnChangePassword;
         private Label lblTitle;
+        private List<User> users = new List<User>();
 
         public UsersForm()
         {
@@ -55,6 +60,75 @@ namespace ClothingStoreManager.Forms
             this.Controls.Add(dgvUsers);
             this.Controls.Add(panel);
             this.Controls.Add(lblTitle);
+            this.Load += UsersForm_Load;
+        }
+
+        private void LoadUsers()
+        {
+            users = DatabaseHelper.GetAllUsers();
+            // إخفاء كلمة المرور في العرض
+            var display = users.Select(u => new { u.Id, u.Username, Password = "****", u.Role }).ToList();
+            dgvUsers.DataSource = display;
+        }
+
+        private void UsersForm_Load(object sender, EventArgs e)
+        {
+            btnAdd.Click += (s, e) =>
+            {
+                var form = new UserEditForm();
+                if (form.ShowDialog() == DialogResult.OK)
+                {
+                    DatabaseHelper.AddUser(form.User);
+                    LoadUsers();
+                }
+            };
+            btnEdit.Click += (s, e) =>
+            {
+                if (dgvUsers.CurrentRow != null)
+                {
+                    var userId = (int)dgvUsers.CurrentRow.Cells[0].Value;
+                    var user = users.FirstOrDefault(u => u.Id == userId);
+                    if (user != null)
+                    {
+                        var form = new UserEditForm(user);
+                        if (form.ShowDialog() == DialogResult.OK)
+                        {
+                            DatabaseHelper.UpdateUser(form.User);
+                            LoadUsers();
+                        }
+                    }
+                }
+            };
+            btnDelete.Click += (s, e) =>
+            {
+                if (dgvUsers.CurrentRow != null)
+                {
+                    var userId = (int)dgvUsers.CurrentRow.Cells[0].Value;
+                    var user = users.FirstOrDefault(u => u.Id == userId);
+                    if (user != null && MessageBox.Show($"هل تريد حذف المستخدم {user.Username}?", "تأكيد", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                    {
+                        DatabaseHelper.DeleteUser(user.Id);
+                        LoadUsers();
+                    }
+                }
+            };
+            btnChangePassword.Click += (s, e) =>
+            {
+                if (dgvUsers.CurrentRow != null)
+                {
+                    var userId = (int)dgvUsers.CurrentRow.Cells[0].Value;
+                    var user = users.FirstOrDefault(u => u.Id == userId);
+                    if (user != null)
+                    {
+                        var form = new ChangePasswordForm(user);
+                        if (form.ShowDialog() == DialogResult.OK)
+                        {
+                            LoadUsers();
+                        }
+                    }
+                }
+            };
+            LoadUsers();
         }
     }
 }

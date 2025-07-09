@@ -7,36 +7,37 @@ using System.Linq;
 
 namespace ClothingStoreManager.Forms
 {
-    public class CustomersForm : Form
+    public class SuppliersForm : Form
     {
-        private DataGridView dgvCustomers;
+        private DataGridView dgvSuppliers;
         private Button btnAdd, btnEdit, btnDelete, btnSearch;
         private TextBox txtSearch;
         private Label lblTitle;
-        private List<Customer> customers = new List<Customer>();
+        private List<Supplier> suppliers = new List<Supplier>();
 
-        public CustomersForm()
+        public SuppliersForm()
         {
-            this.Text = "إدارة العملاء";
+            this.Text = "إدارة الموردين";
             this.RightToLeft = RightToLeft.Yes;
             this.RightToLeftLayout = true;
             this.Size = new Size(900, 600);
             this.Font = new Font("Cairo", 12);
             InitializeComponents();
+            this.Load += SuppliersForm_Load;
         }
 
         private void InitializeComponents()
         {
             lblTitle = new Label()
             {
-                Text = "قائمة العملاء",
+                Text = "قائمة الموردين",
                 Dock = DockStyle.Top,
                 Height = 50,
                 TextAlign = ContentAlignment.MiddleCenter,
                 Font = new Font("Cairo", 16, FontStyle.Bold)
             };
 
-            dgvCustomers = new DataGridView()
+            dgvSuppliers = new DataGridView()
             {
                 Dock = DockStyle.Fill,
                 ReadOnly = true,
@@ -45,7 +46,7 @@ namespace ClothingStoreManager.Forms
                 AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
             };
 
-            btnAdd = new Button() { Text = "إضافة عميل", Width = 120 };
+            btnAdd = new Button() { Text = "إضافة مورد", Width = 120 };
             btnEdit = new Button() { Text = "تعديل", Width = 100 };
             btnDelete = new Button() { Text = "حذف", Width = 100 };
             btnSearch = new Button() { Text = "بحث", Width = 100 };
@@ -59,59 +60,58 @@ namespace ClothingStoreManager.Forms
             };
             panel.Controls.AddRange(new Control[] { btnAdd, btnEdit, btnDelete, btnSearch, txtSearch });
 
-            this.Controls.Add(dgvCustomers);
+            this.Controls.Add(dgvSuppliers);
             this.Controls.Add(panel);
             this.Controls.Add(lblTitle);
-            this.Load += CustomersForm_Load;
         }
 
-        private void LoadCustomers(string? search = null)
+        private void LoadSuppliers(string? search = null)
         {
-            customers = DatabaseHelper.GetAllCustomers();
+            suppliers = DatabaseHelper.GetAllSuppliers();
             if (!string.IsNullOrWhiteSpace(search))
-                dgvCustomers.DataSource = customers.Where(c => c.Name.Contains(search) || c.Phone.Contains(search)).ToList();
+                dgvSuppliers.DataSource = suppliers.Where(s => s.Name.Contains(search) || s.Phone.Contains(search)).ToList();
             else
-                dgvCustomers.DataSource = customers;
+                dgvSuppliers.DataSource = suppliers;
         }
 
-        private void CustomersForm_Load(object sender, EventArgs e)
+        private void SuppliersForm_Load(object sender, EventArgs e)
         {
             btnAdd.Click += (s, e) =>
             {
-                var form = new CustomerEditForm();
+                var form = new SupplierEditForm();
                 if (form.ShowDialog() == DialogResult.OK)
                 {
-                    DatabaseHelper.AddCustomer(form.Customer);
-                    LoadCustomers();
+                    DatabaseHelper.AddSupplier(form.Supplier);
+                    LoadSuppliers();
                 }
             };
             btnEdit.Click += (s, e) =>
             {
-                if (dgvCustomers.CurrentRow != null)
+                if (dgvSuppliers.CurrentRow != null)
                 {
-                    var customer = (Customer)dgvCustomers.CurrentRow.DataBoundItem;
-                    var form = new CustomerEditForm(customer);
+                    var supplier = (Supplier)dgvSuppliers.CurrentRow.DataBoundItem;
+                    var form = new SupplierEditForm(supplier);
                     if (form.ShowDialog() == DialogResult.OK)
                     {
-                        DatabaseHelper.UpdateCustomer(form.Customer);
-                        LoadCustomers();
+                        DatabaseHelper.UpdateSupplier(form.Supplier);
+                        LoadSuppliers();
                     }
                 }
             };
             btnDelete.Click += (s, e) =>
             {
-                if (dgvCustomers.CurrentRow != null)
+                if (dgvSuppliers.CurrentRow != null)
                 {
-                    var customer = (Customer)dgvCustomers.CurrentRow.DataBoundItem;
-                    if (MessageBox.Show($"هل تريد حذف العميل {customer.Name}?", "تأكيد", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                    var supplier = (Supplier)dgvSuppliers.CurrentRow.DataBoundItem;
+                    if (MessageBox.Show($"هل تريد حذف المورد {supplier.Name}?", "تأكيد", MessageBoxButtons.YesNo) == DialogResult.Yes)
                     {
-                        DatabaseHelper.DeleteCustomer(customer.Id);
-                        LoadCustomers();
+                        DatabaseHelper.DeleteSupplier(supplier.Id);
+                        LoadSuppliers();
                     }
                 }
             };
-            btnSearch.Click += (s, e) => LoadCustomers(txtSearch.Text);
-            LoadCustomers();
+            btnSearch.Click += (s, e) => LoadSuppliers(txtSearch.Text);
+            LoadSuppliers();
         }
     }
 }

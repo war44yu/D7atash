@@ -1,5 +1,10 @@
 using System.Windows.Forms;
 using System.Drawing;
+using ClothingStoreManager.Helpers;
+using ClothingStoreManager.Models;
+using System.Collections.Generic;
+using System.Linq;
+using System;
 
 namespace ClothingStoreManager.Forms
 {
@@ -9,6 +14,10 @@ namespace ClothingStoreManager.Forms
         private Button btnAddItem, btnRemoveItem, btnPrint, btnOpenDrawer, btnSaveInvoice;
         private ComboBox cmbCustomers;
         private Label lblTotal, lblTitle;
+        private List<InvoiceItem> invoiceItems = new List<InvoiceItem>();
+        private List<Customer> customers = new List<Customer>();
+        private List<Item> items = new List<Item>();
+        private decimal total = 0;
 
         public SalesForm()
         {
@@ -59,6 +68,99 @@ namespace ClothingStoreManager.Forms
             this.Controls.Add(dgvInvoiceItems);
             this.Controls.Add(panel);
             this.Controls.Add(lblTitle);
+            this.Load += SalesForm_Load;
+        }
+
+        private void LoadData()
+        {
+            customers = DatabaseHelper.GetAllCustomers();
+            items = DatabaseHelper.GetAllItems();
+            cmbCustomers.Items.Clear();
+            cmbCustomers.Items.Add("عميل عادي");
+            foreach (var customer in customers)
+                cmbCustomers.Items.Add($"{customer.Name} - {customer.Phone}");
+            cmbCustomers.SelectedIndex = 0;
+        }
+
+        private void UpdateTotal()
+        {
+            total = invoiceItems.Sum(i => i.Total);
+            lblTotal.Text = $"الإجمالي: {total:0.00} جنيه";
+        }
+
+        private void RefreshInvoiceGrid()
+        {
+            dgvInvoiceItems.DataSource = null;
+            dgvInvoiceItems.DataSource = invoiceItems.ToList();
+            UpdateTotal();
+        }
+
+        private void SalesForm_Load(object sender, EventArgs e)
+        {
+            LoadData();
+            RefreshInvoiceGrid();
+            
+            btnAddItem.Click += (s, e) =>
+            {
+                var form = new AddItemToInvoiceForm(items);
+                if (form.ShowDialog() == DialogResult.OK)
+                {
+                    invoiceItems.Add(form.InvoiceItem);
+                    RefreshInvoiceGrid();
+                }
+            };
+            
+            btnRemoveItem.Click += (s, e) =>
+            {
+                if (dgvInvoiceItems.CurrentRow != null)
+                {
+                    var item = (InvoiceItem)dgvInvoiceItems.CurrentRow.DataBoundItem;
+                    invoiceItems.Remove(item);
+                    RefreshInvoiceGrid();
+                }
+            };
+            
+            btnSaveInvoice.Click += (s, e) =>
+            {
+                if (invoiceItems.Count == 0)
+                {
+                    MessageBox.Show("يجب إضافة أصناف للفاتورة!", "تنبيه");
+                    return;
+                }
+                var invoice = new Invoice()
+                {
+                    Date = DateTime.Now,
+                    CustomerId = cmbCustomers.SelectedIndex > 0 ? customers[cmbCustomers.SelectedIndex - 1].Id : null,
+                    Total = total,
+                    Type = "بيع"
+                };
+                int invoiceId = DatabaseHelper.AddInvoice(invoice);
+                foreach (var item in invoiceItems)
+                {
+                    DatabaseHelper.AddInvoiceItem(invoiceId, item);
+                    DatabaseHelper.UpdateItemQuantity(item.ItemId, -item.Quantity);
+                }
+                MessageBox.Show($"تم حفظ الفاتورة رقم {invoiceId} بنجاح!", "نجح");
+                invoiceItems.Clear();
+                RefreshInvoiceGrid();
+            };
+            
+            btnPrint.Click += (s, e) =>
+            {
+                if (invoiceItems.Count > 0)
+                {
+                    var invoice = new Invoice() { Id = 0, Date = DateTime.Now, Total = total };
+                    var customer = cmbCustomers.SelectedIndex > 0 ? customers[cmbCustomers.SelectedIndex - 1] : null;
+                    string invoiceText = InvoiceTemplate.GenerateInvoiceText(invoice, customer, invoiceItems);
+                    PrinterHelper.PrintText(invoiceText);
+                }
+            };
+            
+            btnOpenDrawer.Click += (s, e) =>
+            {
+                PrinterHelper.OpenCashDrawer();
+                MessageBox.Show("تم فتح درج الكاشير!", "تم");
+            };
         }
     }
 }

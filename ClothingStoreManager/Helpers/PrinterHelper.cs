@@ -1,5 +1,6 @@
 using System.Drawing.Printing;
 using System.Runtime.InteropServices;
+using System.Drawing;
 
 namespace ClothingStoreManager.Helpers
 {
@@ -13,7 +14,8 @@ namespace ClothingStoreManager.Helpers
                 pd.PrinterSettings.PrinterName = printerName;
             pd.PrintPage += (s, e) =>
             {
-                e.Graphics.DrawString(text, new Font("Cairo", 12), Brushes.Black, 10, 10);
+                if (e.Graphics != null)
+                    e.Graphics.DrawString(text, new Font("Arial", 12), Brushes.Black, 10, 10);
             };
             pd.Print();
         }
@@ -21,6 +23,8 @@ namespace ClothingStoreManager.Helpers
         // فتح درج الكاشير عبر كود ESC/POS
         public static void OpenCashDrawer(string printerName = "")
         {
+            if (string.IsNullOrEmpty(printerName))
+                printerName = new PrinterSettings().PrinterName;
             RawPrinterHelper.SendStringToPrinter(printerName, "\x1B\x70\x00\x19\xFA");
         }
     }

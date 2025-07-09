@@ -1,5 +1,8 @@
 using System.Windows.Forms;
 using System.Drawing;
+using ClothingStoreManager.Helpers;
+using System.IO;
+using System;
 
 namespace ClothingStoreManager.Forms
 {
@@ -63,6 +66,73 @@ namespace ClothingStoreManager.Forms
 
             this.Controls.Add(table);
             this.Controls.Add(panel);
+            this.Load += SettingsForm_Load;
+        }
+
+        private void LoadSettings()
+        {
+            txtStoreName.Text = InvoiceTemplate.StoreName;
+            txtStoreAddress.Text = InvoiceTemplate.StoreAddress;
+            txtStorePhone.Text = InvoiceTemplate.StorePhone;
+            txtFooter.Text = InvoiceTemplate.Footer;
+        }
+        
+        private void SaveSettings()
+        {
+            InvoiceTemplate.StoreName = txtStoreName.Text;
+            InvoiceTemplate.StoreAddress = txtStoreAddress.Text;
+            InvoiceTemplate.StorePhone = txtStorePhone.Text;
+            InvoiceTemplate.Footer = txtFooter.Text;
+            MessageBox.Show("تم حفظ الإعدادات بنجاح!", "نجح");
+        }
+        
+        private void BackupDatabase()
+        {
+            try
+            {
+                SaveFileDialog saveDialog = new SaveFileDialog();
+                saveDialog.Filter = "قاعدة بيانات|*.db";
+                saveDialog.FileName = $"backup_{DateTime.Now:yyyyMMdd_HHmmss}.db";
+                if (saveDialog.ShowDialog() == DialogResult.OK)
+                {
+                    File.Copy("clothing_store.db", saveDialog.FileName, true);
+                    MessageBox.Show("تم إنشاء النسخة الاحتياطية بنجاح!", "نجح");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"خطأ في إنشاء النسخة الاحتياطية: {ex.Message}", "خطأ");
+            }
+        }
+        
+        private void RestoreDatabase()
+        {
+            try
+            {
+                OpenFileDialog openDialog = new OpenFileDialog();
+                openDialog.Filter = "قاعدة بيانات|*.db";
+                if (openDialog.ShowDialog() == DialogResult.OK)
+                {
+                    if (MessageBox.Show("سيتم استبدال قاعدة البيانات الحالية. هل أنت متأكد؟", "تأكيد", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                    {
+                        File.Copy(openDialog.FileName, "clothing_store.db", true);
+                        MessageBox.Show("تم استعادة قاعدة البيانات بنجاح! يرجى إعادة تشغيل البرنامج.", "نجح");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"خطأ في استعادة قاعدة البيانات: {ex.Message}", "خطأ");
+            }
+        }
+
+        private void SettingsForm_Load(object sender, EventArgs e)
+        {
+            LoadSettings();
+            btnSave.Click += (s, e) => SaveSettings();
+            btnBackup.Click += (s, e) => BackupDatabase();
+            btnRestore.Click += (s, e) => RestoreDatabase();
+            btnUsers.Click += (s, e) => new UsersForm().ShowDialog();
         }
     }
 }

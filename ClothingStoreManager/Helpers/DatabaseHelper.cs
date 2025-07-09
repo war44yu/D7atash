@@ -3,6 +3,7 @@ using System.Data;
 using System.IO;
 using System.Collections.Generic; // Added for List
 using ClothingStoreManager.Models; // Added for Models
+using System; // Added for DateTime
 
 namespace ClothingStoreManager.Helpers
 {
@@ -205,6 +206,210 @@ CREATE TABLE IF NOT EXISTS Users (
                     Name = reader.GetString(1),
                     Phone = reader.GetString(2),
                     Address = reader.GetString(3)
+                });
+            }
+            return list;
+        }
+        // إضافة مورد
+        public static void AddSupplier(Models.Supplier supplier)
+        {
+            using var conn = GetConnection();
+            conn.Open();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "INSERT INTO Suppliers (Name, Phone, Address) VALUES (@n, @p, @a)";
+            cmd.Parameters.AddWithValue("@n", supplier.Name);
+            cmd.Parameters.AddWithValue("@p", supplier.Phone);
+            cmd.Parameters.AddWithValue("@a", supplier.Address);
+            cmd.ExecuteNonQuery();
+        }
+        // تحديث مورد
+        public static void UpdateSupplier(Models.Supplier supplier)
+        {
+            using var conn = GetConnection();
+            conn.Open();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "UPDATE Suppliers SET Name=@n, Phone=@p, Address=@a WHERE Id=@id";
+            cmd.Parameters.AddWithValue("@n", supplier.Name);
+            cmd.Parameters.AddWithValue("@p", supplier.Phone);
+            cmd.Parameters.AddWithValue("@a", supplier.Address);
+            cmd.Parameters.AddWithValue("@id", supplier.Id);
+            cmd.ExecuteNonQuery();
+        }
+        // حذف مورد
+        public static void DeleteSupplier(int id)
+        {
+            using var conn = GetConnection();
+            conn.Open();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "DELETE FROM Suppliers WHERE Id=@id";
+            cmd.Parameters.AddWithValue("@id", id);
+            cmd.ExecuteNonQuery();
+        }
+        // جلب جميع الموردين
+        public static List<Models.Supplier> GetAllSuppliers()
+        {
+            var list = new List<Models.Supplier>();
+            using var conn = GetConnection();
+            conn.Open();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT * FROM Suppliers";
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                list.Add(new Models.Supplier
+                {
+                    Id = reader.GetInt32(0),
+                    Name = reader.GetString(1),
+                    Phone = reader.GetString(2),
+                    Address = reader.GetString(3)
+                });
+            }
+            return list;
+        }
+        // إضافة مستخدم
+        public static void AddUser(Models.User user)
+        {
+            using var conn = GetConnection();
+            conn.Open();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "INSERT INTO Users (Username, Password, Role) VALUES (@u, @p, @r)";
+            cmd.Parameters.AddWithValue("@u", user.Username);
+            cmd.Parameters.AddWithValue("@p", user.Password);
+            cmd.Parameters.AddWithValue("@r", user.Role);
+            cmd.ExecuteNonQuery();
+        }
+        // تحديث مستخدم
+        public static void UpdateUser(Models.User user)
+        {
+            using var conn = GetConnection();
+            conn.Open();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "UPDATE Users SET Username=@u, Role=@r WHERE Id=@id";
+            cmd.Parameters.AddWithValue("@u", user.Username);
+            cmd.Parameters.AddWithValue("@r", user.Role);
+            cmd.Parameters.AddWithValue("@id", user.Id);
+            cmd.ExecuteNonQuery();
+        }
+        // تغيير كلمة المرور
+        public static void ChangePassword(int userId, string newPassword)
+        {
+            using var conn = GetConnection();
+            conn.Open();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "UPDATE Users SET Password=@p WHERE Id=@id";
+            cmd.Parameters.AddWithValue("@p", newPassword);
+            cmd.Parameters.AddWithValue("@id", userId);
+            cmd.ExecuteNonQuery();
+        }
+        // حذف مستخدم
+        public static void DeleteUser(int id)
+        {
+            using var conn = GetConnection();
+            conn.Open();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "DELETE FROM Users WHERE Id=@id";
+            cmd.Parameters.AddWithValue("@id", id);
+            cmd.ExecuteNonQuery();
+        }
+        // جلب جميع المستخدمين
+        public static List<Models.User> GetAllUsers()
+        {
+            var list = new List<Models.User>();
+            using var conn = GetConnection();
+            conn.Open();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT * FROM Users";
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                list.Add(new Models.User
+                {
+                    Id = reader.GetInt32(0),
+                    Username = reader.GetString(1),
+                    Password = reader.GetString(2),
+                    Role = reader.GetString(3)
+                });
+            }
+            return list;
+        }
+        // إضافة فاتورة
+        public static int AddInvoice(Models.Invoice invoice)
+        {
+            using var conn = GetConnection();
+            conn.Open();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "INSERT INTO Invoices (Date, CustomerId, Total, Type) VALUES (@d, @c, @t, @type); SELECT last_insert_rowid();";
+            cmd.Parameters.AddWithValue("@d", invoice.Date.ToString("yyyy-MM-dd HH:mm:ss"));
+            cmd.Parameters.AddWithValue("@c", invoice.CustomerId.HasValue ? (object)invoice.CustomerId.Value : DBNull.Value);
+            cmd.Parameters.AddWithValue("@t", invoice.Total);
+            cmd.Parameters.AddWithValue("@type", invoice.Type);
+            return Convert.ToInt32(cmd.ExecuteScalar());
+        }
+        // إضافة عنصر فاتورة
+        public static void AddInvoiceItem(int invoiceId, Models.InvoiceItem item)
+        {
+            using var conn = GetConnection();
+            conn.Open();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "INSERT INTO InvoiceItems (InvoiceId, ItemId, Name, Quantity, Price) VALUES (@iid, @itid, @n, @q, @p)";
+            cmd.Parameters.AddWithValue("@iid", invoiceId);
+            cmd.Parameters.AddWithValue("@itid", item.ItemId);
+            cmd.Parameters.AddWithValue("@n", item.Name);
+            cmd.Parameters.AddWithValue("@q", item.Quantity);
+            cmd.Parameters.AddWithValue("@p", item.Price);
+            cmd.ExecuteNonQuery();
+        }
+        // تحديث كمية صنف (تقليل عند البيع، زيادة عند الشراء)
+        public static void UpdateItemQuantity(int itemId, int quantityChange)
+        {
+            using var conn = GetConnection();
+            conn.Open();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "UPDATE Items SET Quantity = Quantity + @q WHERE Id = @id";
+            cmd.Parameters.AddWithValue("@q", quantityChange);
+            cmd.Parameters.AddWithValue("@id", itemId);
+            cmd.ExecuteNonQuery();
+        }
+        // جلب جميع الفواتير
+        public static List<Models.Invoice> GetAllInvoices()
+        {
+            var list = new List<Models.Invoice>();
+            using var conn = GetConnection();
+            conn.Open();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT * FROM Invoices ORDER BY Date DESC";
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                list.Add(new Models.Invoice
+                {
+                    Id = reader.GetInt32(0),
+                    Date = DateTime.Parse(reader.GetString(1)),
+                    CustomerId = reader.IsDBNull(2) ? null : reader.GetInt32(2),
+                    Total = reader.GetDecimal(3),
+                    Type = reader.GetString(4)
+                });
+            }
+            return list;
+        }
+        // جلب عناصر فاتورة معينة
+        public static List<Models.InvoiceItem> GetInvoiceItems(int invoiceId)
+        {
+            var list = new List<Models.InvoiceItem>();
+            using var conn = GetConnection();
+            conn.Open();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT * FROM InvoiceItems WHERE InvoiceId = @id";
+            cmd.Parameters.AddWithValue("@id", invoiceId);
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                list.Add(new Models.InvoiceItem
+                {
+                    ItemId = reader.GetInt32(2),
+                    Name = reader.GetString(3),
+                    Quantity = reader.GetInt32(4),
+                    Price = reader.GetDecimal(5)
                 });
             }
             return list;
