@@ -6,11 +6,13 @@ namespace ClothingStoreManager
     public class MainForm : Form
     {
         private Panel sidePanel;
-        private Button btnDashboard, btnItems, btnStock, btnSales, btnCustomers, btnSuppliers, btnReports, btnSettings;
+        private Button btnDashboard, btnItems, btnStock, btnSales, btnCustomers, btnSuppliers, btnReports, btnSettings, btnUsers;
         private Label lblTitle;
+        private string? userRole;
 
-        public MainForm()
+        public MainForm(string? role = null)
         {
+            userRole = role;
             this.Text = "برنامج إدارة محل الملابس";
             this.RightToLeft = RightToLeft.Yes;
             this.RightToLeftLayout = true;
@@ -37,6 +39,7 @@ namespace ClothingStoreManager
             btnSuppliers = CreateMenuButton("الموردين");
             btnReports = CreateMenuButton("التقارير");
             btnSettings = CreateMenuButton("الإعدادات");
+            btnUsers = CreateMenuButton("المستخدمون");
 
             btnDashboard.Click += (s, e) => MessageBox.Show("لوحة المعلومات قيد التطوير", "تنبيه");
             btnItems.Click += (s, e) => new Forms.ItemsForm().ShowDialog();
@@ -45,7 +48,13 @@ namespace ClothingStoreManager
             btnCustomers.Click += (s, e) => new Forms.CustomersForm().ShowDialog();
             btnSuppliers.Click += (s, e) => MessageBox.Show("نافذة الموردين قيد التطوير", "تنبيه");
             btnReports.Click += (s, e) => new Forms.ReportsForm().ShowDialog();
-            btnSettings.Click += (s, e) => new Forms.SettingsForm().ShowDialog();
+            btnSettings.Click += (s, e) =>
+            {
+                if (userRole == "مدير")
+                    new Forms.SettingsForm().ShowDialog();
+                else
+                    MessageBox.Show("هذه النافذة متاحة للمدير فقط!", "تنبيه");
+            };
 
             btnDashboard.Top = 40;
             btnItems.Top = btnDashboard.Bottom + 10;
@@ -55,6 +64,11 @@ namespace ClothingStoreManager
             btnSuppliers.Top = btnCustomers.Bottom + 10;
             btnReports.Top = btnSuppliers.Bottom + 10;
             btnSettings.Top = btnReports.Bottom + 10;
+            if (userRole == "مدير")
+            {
+                sidePanel.Controls.Add(btnUsers);
+                btnUsers.Click += (s, e) => new Forms.UsersForm().ShowDialog();
+            }
 
             sidePanel.Controls.AddRange(new Control[] {
                 btnDashboard, btnItems, btnStock, btnSales, btnCustomers, btnSuppliers, btnReports, btnSettings

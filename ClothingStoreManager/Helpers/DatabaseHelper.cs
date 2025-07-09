@@ -1,6 +1,8 @@
 using System.Data.SQLite;
 using System.Data;
 using System.IO;
+using System.Collections.Generic; // Added for List
+using ClothingStoreManager.Models; // Added for Models
 
 namespace ClothingStoreManager.Helpers
 {
@@ -66,12 +68,90 @@ CREATE TABLE IF NOT EXISTS Users (
 );
 ";
                 cmd.ExecuteNonQuery();
+                // إضافة مستخدم مدير افتراضي
+                cmd.CommandText = @"INSERT INTO Users (Username, Password, Role) VALUES ('admin', '1234', 'مدير');";
+                cmd.ExecuteNonQuery();
             }
         }
 
         public static SQLiteConnection GetConnection()
         {
             return new SQLiteConnection(connectionString);
+        }
+
+        // إضافة صنف
+        public static void AddItem(Models.Item item)
+        {
+            using var conn = GetConnection();
+            conn.Open();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "INSERT INTO Items (Name, Type, Size, Color, Brand, ImagePath, Quantity, PurchasePrice, SalePrice) VALUES (@n, @t, @s, @c, @b, @img, @q, @pp, @sp)";
+            cmd.Parameters.AddWithValue("@n", item.Name);
+            cmd.Parameters.AddWithValue("@t", item.Type);
+            cmd.Parameters.AddWithValue("@s", item.Size);
+            cmd.Parameters.AddWithValue("@c", item.Color);
+            cmd.Parameters.AddWithValue("@b", item.Brand);
+            cmd.Parameters.AddWithValue("@img", item.ImagePath ?? "");
+            cmd.Parameters.AddWithValue("@q", item.Quantity);
+            cmd.Parameters.AddWithValue("@pp", item.PurchasePrice);
+            cmd.Parameters.AddWithValue("@sp", item.SalePrice);
+            cmd.ExecuteNonQuery();
+        }
+        // تحديث صنف
+        public static void UpdateItem(Models.Item item)
+        {
+            using var conn = GetConnection();
+            conn.Open();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "UPDATE Items SET Name=@n, Type=@t, Size=@s, Color=@c, Brand=@b, ImagePath=@img, Quantity=@q, PurchasePrice=@pp, SalePrice=@sp WHERE Id=@id";
+            cmd.Parameters.AddWithValue("@n", item.Name);
+            cmd.Parameters.AddWithValue("@t", item.Type);
+            cmd.Parameters.AddWithValue("@s", item.Size);
+            cmd.Parameters.AddWithValue("@c", item.Color);
+            cmd.Parameters.AddWithValue("@b", item.Brand);
+            cmd.Parameters.AddWithValue("@img", item.ImagePath ?? "");
+            cmd.Parameters.AddWithValue("@q", item.Quantity);
+            cmd.Parameters.AddWithValue("@pp", item.PurchasePrice);
+            cmd.Parameters.AddWithValue("@sp", item.SalePrice);
+            cmd.Parameters.AddWithValue("@id", item.Id);
+            cmd.ExecuteNonQuery();
+        }
+        // حذف صنف
+        public static void DeleteItem(int id)
+        {
+            using var conn = GetConnection();
+            conn.Open();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "DELETE FROM Items WHERE Id=@id";
+            cmd.Parameters.AddWithValue("@id", id);
+            cmd.ExecuteNonQuery();
+        }
+        // جلب جميع الأصناف
+        public static List<Models.Item> GetAllItems()
+        {
+            var list = new List<Models.Item>();
+            using var conn = GetConnection();
+            conn.Open();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT * FROM Items";
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                list.Add(new Models.Item
+                {
+                    Id = reader.GetInt32(0),
+                    Name = reader.GetString(1),
+                    Type = reader.GetString(2),
+                    Size = reader.GetString(3),
+                    Color = reader.GetString(4),
+                    Brand = reader.GetString(5),
+                    ImagePath = reader.GetString(6),
+                    Quantity = reader.GetInt32(7),
+                    PurchasePrice = reader.GetDecimal(8),
+                    SalePrice = reader.GetDecimal(9)
+                });
+            }
+            return list;
         }
     }
 }

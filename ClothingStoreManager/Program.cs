@@ -16,7 +16,14 @@ namespace ClothingStoreManager
 
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new MainForm());
+            Helpers.DatabaseHelper.InitializeDatabase();
+            using (var login = new Forms.LoginForm())
+            {
+                if (login.ShowDialog() == DialogResult.OK)
+                {
+                    Application.Run(new MainForm(login.UserRole));
+                }
+            }
         }
     }
 }
